@@ -59,7 +59,7 @@ already stripped by ovos-gui and `null` values already removed.
   passes through.
 - `activated` means the namespace is now the top of the stack for that session. `deactivated`
   means it left the stack; the client drops its state.
-- `idle` means the stack is empty on the device; the client shows its resting display.
+- `idle` means some session's stack just emptied (ovos-gui calls `on_idle` device-wide, spec finding F3). A client whose own session stack is already empty shows its resting display; a client still holding a stack ignores the frame. The `deactivated` frames that emptied the session arrive before it.
 - `status.event_name` is the bus topic (`ovos.*` per spec §5.3, or whatever ovos-gui forwards);
   `status.data` is the message payload unchanged.
 - `snapshot.stack` is an array, **index 0 = active/top**, each entry
