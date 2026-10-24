@@ -39,7 +39,7 @@ on the core bus as today.
 
 ## Server → client frames
 
-Every frame below except `idle` and `status` carries `session_id`. `data` is always the namespace's
+Every frame below except `idle` carries `session_id` (`status` carries the session that raised it). `data` is always the namespace's
 **full merged** session data as ovos-gui holds it after the change (never a delta), with `__` keys
 already stripped by ovos-gui and `null` values already removed.
 
