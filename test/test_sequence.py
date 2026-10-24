@@ -59,3 +59,29 @@ def test_snapshot_is_per_session(adapter):
     recv(early)
     _, other = join(adapter, "hall")
     assert other["stack"] == []
+
+
+def test_idle_from_one_session_keeps_other_sessions_snapshot(adapter):
+    kitchen, _ = join(adapter, "kitchen")
+    hall, _ = join(adapter, "hall")
+    adapter.on_namespace_activated(HELLO_SKILL, "kitchen")
+    adapter.on_namespace_activated(HELLO_SKILL, "hall")
+    adapter.on_namespace_deactivated(HELLO_SKILL, "hall")
+    adapter.on_idle()
+    recv_n(kitchen, 2)
+    recv_n(hall, 3)
+    _, late_kitchen = join(adapter, "kitchen")
+    assert [entry["skill_id"] for entry in late_kitchen["stack"]] == [HELLO_SKILL]
+    _, late_hall = join(adapter, "hall")
+    assert late_hall["stack"] == []
+
+
+def test_exposed_namespace_returns_to_top(adapter):
+    early, _ = join(adapter)
+    adapter.on_namespace_activated("skill.low", "default")
+    adapter.on_namespace_activated("skill.high", "default")
+    adapter.on_namespace_deactivated("skill.high", "default")
+    adapter.on_namespace_activated("skill.low", "default")
+    recv_n(early, 4)
+    _, snapshot = join(adapter)
+    assert [entry["skill_id"] for entry in snapshot["stack"]] == ["skill.low"]

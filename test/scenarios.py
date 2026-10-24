@@ -1,7 +1,9 @@
 """Scripted ovos-gui call sequences, in the order ovos-gui's rework makes them.
 
 handle_show_page dispatches the template, then activates the namespace;
-handle_set_value calls on_session_update with the full merged data.
+handle_set_value calls on_session_update with the full merged data;
+removing the top namespace re-activates the one below it, and on_idle follows
+the deactivation that empties a session.
 """
 import json
 import os
@@ -31,12 +33,13 @@ def text_then_weather(adapter):
 def weather_then_clear(adapter):
     text_then_weather(adapter)
     adapter.on_namespace_deactivated(WEATHER_SKILL, "default")
+    adapter.on_namespace_activated(HELLO_SKILL, "default")
     adapter.on_namespace_deactivated(HELLO_SKILL, "default")
     adapter.on_idle()
 
 
 SCENARIOS = {"text_then_weather": (text_then_weather, 8),
-             "weather_then_clear": (weather_then_clear, 11)}
+             "weather_then_clear": (weather_then_clear, 12)}
 
 
 def fixture_path(name, suffix=""):

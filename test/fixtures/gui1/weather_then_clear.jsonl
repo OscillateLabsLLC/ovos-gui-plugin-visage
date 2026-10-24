@@ -7,5 +7,6 @@
 {"type": "activated", "skill_id": "ovos-skill-weather.openvoiceos", "session_id": "default"}
 {"type": "session_update", "skill_id": "ovos-skill-weather.openvoiceos", "data": {"current": 22, "min": 14, "max": 25, "condition": "Clear", "location": "San Antonio", "unit": "C"}, "session_id": "default"}
 {"type": "deactivated", "skill_id": "ovos-skill-weather.openvoiceos", "session_id": "default"}
+{"type": "activated", "skill_id": "ovos-skill-hello.openvoiceos", "session_id": "default"}
 {"type": "deactivated", "skill_id": "ovos-skill-hello.openvoiceos", "session_id": "default"}
 {"type": "idle"}

@@ -67,8 +67,9 @@ already stripped by ovos-gui and `null` values already removed.
   when the namespace has data but no template yet. An empty array means idle.
 - **PROTOTYPE SHORTCUT:** ovos-gui has no query surface yet. The adapter builds `snapshot` from
   a per-session mirror of the adapter calls it saw: activation order, last template and last
-  data per `skill_id`. `deactivated` removes the entry; `idle` empties every session. The plan
-  wants a stateless adapter that reads the stack from ovos-gui instead.
+  data per `skill_id`. `deactivated` removes the entry. `idle` does not change the mirror,
+  because ovos-gui sends it after the deactivations that empty one session. The plan wants a
+  stateless adapter that reads the stack from ovos-gui instead.
 
 Example sequence after a skill shows text:
 

@@ -2,6 +2,8 @@
 
 PROTOTYPE SHORTCUT: ovos-gui has no query surface yet, so the adapter rebuilds
 the stack from the adapter calls it sees instead of asking ovos-gui.
+`idle` changes nothing: ovos-gui fires the device-wide on_idle when any one
+session empties, always after the deactivations that emptied it.
 Only touched from the server's event loop thread.
 """
 from typing import Any, Dict, List
@@ -44,9 +46,6 @@ class StackMirror:
 
     def apply(self, frame: Frame) -> None:
         kind = frame.get("type")
-        if kind == "idle":
-            self._sessions.clear()
-            return
         if kind not in ("template", "session_update", "activated", "deactivated"):
             return
         stack = self._session(frame["session_id"])

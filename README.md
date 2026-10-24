@@ -105,8 +105,9 @@ These items are temporary. They are not the final design.
 
 - **Snapshot from a local mirror.** `ovos-gui` has no query surface yet. The adapter keeps a copy
   of the stack for each session. It builds the copy from the calls it sees: activation order, last
-  template, and last data for each `skill_id`. `deactivated` removes an entry. `idle` empties all
-  sessions. The plan wants a stateless adapter that reads the stack from `ovos-gui`.
+  template, and last data for each `skill_id`. `deactivated` removes an entry. `idle` does not
+  change the copy, because `ovos-gui` sends it after the deactivations that empty one session.
+  The plan wants a stateless adapter that reads the stack from `ovos-gui`.
 - **No authentication.** Any client that can reach the port can connect. The default host is
   `127.0.0.1` for this reason.
 - **No reply leg.** The server logs and ignores all client frames after `hello` (GUI-1 version 1).
