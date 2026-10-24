@@ -22,6 +22,10 @@ class GUI1Server:
 
     `publish` is safe to call from any thread and never blocks on a client.
     `state` serves snapshots and sees every frame (StackMirror by default).
+
+    Threading invariant: `state` and the session map are touched only on the
+    server loop thread, so they need no lock. Hook threads (bus executor
+    workers, ovos-gui's idle Timer) cross over only via `call_soon_threadsafe`.
     """
 
     def __init__(self, config: Optional[dict] = None, state=None):
