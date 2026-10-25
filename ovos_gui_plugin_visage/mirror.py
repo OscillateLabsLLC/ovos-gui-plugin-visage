@@ -10,7 +10,7 @@ Only touched from the server's event loop thread.
 """
 from typing import Any, Dict, List, Optional
 
-from ovos_gui_plugin_visage.protocol import Frame
+from ovos_gui_plugin_visage.protocol import Frame, entry
 
 AMBIENT_PREFIX = "gui.ambient."
 
@@ -19,6 +19,7 @@ class _SessionStack:
     def __init__(self):
         self.order: List[str] = []
         self.templates: Dict[str, str] = {}
+        self.entries_seen: Dict[str, Frame] = {}
         self.data: Dict[str, Dict[str, Any]] = {}
 
     def raise_to_top(self, skill_id: str) -> None:
@@ -30,17 +31,19 @@ class _SessionStack:
         if skill_id in self.order:
             self.order.remove(skill_id)
         self.templates.pop(skill_id, None)
+        self.entries_seen.pop(skill_id, None)
         self.data.pop(skill_id, None)
 
     def entries(self) -> List[Frame]:
         return [{"skill_id": skill_id,
                  "template": self.templates.get(skill_id),
-                 "data": dict(self.data.get(skill_id, {}))}
+                 "data": dict(self.data.get(skill_id, {})),
+                 **self.entries_seen.get(skill_id, {})}
                 for skill_id in self.order]
 
 
 class StackMirror:
-    """Tracks activation order, last template and last data per skill."""
+    """Tracks activation order, last template with its `index` and `page_count`, and last data per skill."""
 
     def __init__(self):
         self._sessions: Dict[str, _SessionStack] = {}
@@ -65,6 +68,7 @@ class StackMirror:
             stack.data[skill_id] = dict(frame["data"])
         if kind == "template":
             stack.templates[skill_id] = frame["template"]
+            stack.entries_seen[skill_id] = entry(frame.get("index"), frame.get("page_count"))
             if skill_id not in stack.order:
                 stack.raise_to_top(skill_id)
         elif kind == "activated":

@@ -50,10 +50,17 @@ def snapshot(session_id: str, stack: List[Frame], ambient: Dict[str, Any]) -> Fr
     return {"type": "snapshot", "session_id": session_id, "stack": stack, "ambient": ambient}
 
 
-def template(skill_id: str, template_name: str, data: Dict[str, Any],
-             session_id: str) -> Frame:
+def entry(index: Optional[int], page_count: Optional[int]) -> Frame:
+    """`index` and `page_count` (GUI-1 6.3) when ovos-gui passed both, else nothing: absent means unknown."""
+    if index is None or page_count is None:
+        return {}
+    return {"index": index, "page_count": page_count}
+
+
+def template(skill_id: str, template_name: str, data: Dict[str, Any], session_id: str,
+             index: Optional[int] = None, page_count: Optional[int] = None) -> Frame:
     return {"type": "template", "skill_id": skill_id, "template": template_name,
-            "data": dict(data or {}), "session_id": session_id}
+            "data": dict(data or {}), "session_id": session_id, **entry(index, page_count)}
 
 
 def session_update(skill_id: str, data: Dict[str, Any], session_id: str) -> Frame:

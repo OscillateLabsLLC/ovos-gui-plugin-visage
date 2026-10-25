@@ -21,15 +21,16 @@ WEATHER_SKILL = "ovos-skill-weather.openvoiceos"
 HELLO_DATA = {"title": "Hi", "text": "Hello"}
 WEATHER_DATA = {"current": 21, "min": 14, "max": 25, "condition": "Clear",
                 "location": "San Antonio", "unit": "C"}
+ONLY_ENTRY = {"index": 0, "page_count": 1}
 
 
 def text_then_weather(adapter):
     adapter.on_session_update(HELLO_SKILL, HELLO_DATA, "default")
-    adapter.dispatch_template("SYSTEM_text", HELLO_SKILL, HELLO_DATA, "default")
+    adapter.dispatch_template("SYSTEM_text", HELLO_SKILL, HELLO_DATA, "default", **ONLY_ENTRY)
     adapter.on_namespace_activated(HELLO_SKILL, "default")
     adapter.on_status_event("speak", {"utterance": "Hello"}, "default")
     adapter.on_session_update(WEATHER_SKILL, WEATHER_DATA, "default")
-    adapter.dispatch_template("SYSTEM_weather", WEATHER_SKILL, WEATHER_DATA, "default")
+    adapter.dispatch_template("SYSTEM_weather", WEATHER_SKILL, WEATHER_DATA, "default", **ONLY_ENTRY)
     adapter.on_namespace_activated(WEATHER_SKILL, "default")
     adapter.on_session_update(WEATHER_SKILL, {**WEATHER_DATA, "current": 22}, "default")
 
@@ -49,8 +50,10 @@ def replay_recorded_calls(adapter, name):
         args = {"on_status_event": (row["template"], row["data"]),
                 "on_session_update": (row["skill_id"], row["data"]),
                 "on_legacy_page": (row["skill_id"], row["template"], row["data"]),
+                "dispatch_template": (row["template"], row["skill_id"], row["data"]),
                 "on_namespace_activated": (row["skill_id"],)}[row["call"]]
-        getattr(adapter, row["call"])(*args, row["session_id"])
+        entry = {key: row[key] for key in ("index", "page_count") if row.get(key) is not None}
+        getattr(adapter, row["call"])(*args, row["session_id"], **entry)
 
 
 def legacy_time_page(adapter):

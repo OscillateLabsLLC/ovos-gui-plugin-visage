@@ -26,14 +26,17 @@ class VisageGUIPlugin(AbstractGUIPlugin):
         except Exception:
             LOG.exception(f"VisageGUIPlugin failed to publish {build.__name__}{args}")
 
-    def dispatch_template(self, template: str, skill_id: str,
-                          data: Dict[str, Any], session_id: str = "default") -> None:
-        self._publish(protocol.template, skill_id, template, data, session_id)
+    def dispatch_template(self, template: str, skill_id: str, data: Dict[str, Any],
+                          session_id: str = "default", index: Optional[int] = None,
+                          page_count: Optional[int] = None) -> None:
+        """`index` and `page_count` default to unknown, not to OPM's 0 and 1: the frame then omits them."""
+        self._publish(protocol.template, skill_id, template, data, session_id, index, page_count)
 
     def on_legacy_page(self, skill_id: str, page: str, data: Dict[str, Any],
-                       session_id: str = "default") -> None:
+                       session_id: str = "default", index: Optional[int] = None,
+                       page_count: Optional[int] = None) -> None:
         """GUI-1 4.2 legacy path (prototype only): the skill's own page goes out as a template frame."""
-        self._publish(protocol.template, skill_id, page, data, session_id)
+        self._publish(protocol.template, skill_id, page, data, session_id, index, page_count)
 
     def on_session_update(self, skill_id: str, data: Dict[str, Any],
                           session_id: str = "default") -> None:
