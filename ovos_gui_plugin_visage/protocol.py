@@ -46,8 +46,8 @@ def error(reason: str) -> Frame:
     return {"type": "error", "reason": reason}
 
 
-def snapshot(session_id: str, stack: List[Frame]) -> Frame:
-    return {"type": "snapshot", "session_id": session_id, "stack": stack}
+def snapshot(session_id: str, stack: List[Frame], ambient: Dict[str, Any]) -> Frame:
+    return {"type": "snapshot", "session_id": session_id, "stack": stack, "ambient": ambient}
 
 
 def template(skill_id: str, template_name: str, data: Dict[str, Any],

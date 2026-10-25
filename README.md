@@ -114,11 +114,12 @@ pytest
 
 These items are temporary. They are not the final design.
 
-- **Snapshot from a local mirror.** `ovos-gui` has no query surface yet. The adapter keeps a copy
-  of the stack for each session. It builds the copy from the calls it sees: activation order, last
+- **Snapshot from a local mirror.** `ovos-gui` gives adapters no handle to its query surface.
+  The adapter keeps a copy of the stack for each session. It builds the copy from the calls it sees: activation order, last
   template, and last data for each `skill_id`. `deactivated` removes an entry. `idle` does not
   change the copy, because `ovos-gui` sends it after the deactivations that empty its session.
-  The plan wants a stateless adapter that reads the stack from `ovos-gui`.
+  The plan wants a stateless adapter that reads the stack from `ovos-gui`. The snapshot's
+  `ambient` map is built the same way: the last `gui.ambient.*` status payload for each topic.
 - **No authentication.** Any client that can reach the port can connect. The default host is
   `127.0.0.1` for this reason.
 - **Client frames follow draft amendments.** `interaction` and `focus` map to the

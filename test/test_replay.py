@@ -22,8 +22,8 @@ def replay():
     return module
 
 
-def start_server(stack):
-    server = GUI1Server({"port": 0}, state=StaticSnapshot(stack)).start()
+def start_server(stack, ambient=None):
+    server = GUI1Server({"port": 0}, state=StaticSnapshot(stack, ambient)).start()
     assert server.ready.wait(5) and server.port
     return server
 
@@ -44,14 +44,14 @@ def test_replay_streams_fixture_after_handshake(replay):
 
 
 def test_replay_serves_snapshot_fixture(replay):
-    stack = replay.load_stack(str(fixture_path("text_then_weather", "_snapshot")))
-    server = start_server(stack)
+    snapshot = replay.load_snapshot(str(fixture_path("text_then_weather", "_snapshot")))
+    server = start_server(snapshot["stack"], snapshot["ambient"])
     try:
         with connect(f"ws://127.0.0.1:{server.port}/gui1") as conn:
             conn.send(json.dumps(hello()))
             recv(conn)
-            assert recv(conn)["stack"] == stack
-            assert stack[0]["template"] == "SYSTEM_weather"
+            assert recv(conn) == snapshot
+            assert snapshot["stack"][0]["template"] == "SYSTEM_weather"
     finally:
         server.stop()
 

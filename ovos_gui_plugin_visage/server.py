@@ -167,7 +167,8 @@ class GUI1Server:
                           on_drop=self._unregister)
         link.offer(json.dumps(protocol.welcome(session_id)))
         stack = self.state.snapshot(session_id)
-        link.offer(json.dumps(protocol.snapshot(session_id, stack)))
+        frame = protocol.snapshot(session_id, stack, self.state.ambient())
+        link.offer(json.dumps(frame))
         self._sessions.setdefault(session_id, set()).add(link)
         self._client_total += 1
         LOG.info(f"GUI-1 client {link.peer} joined session '{session_id}'")

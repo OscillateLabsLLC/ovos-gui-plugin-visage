@@ -86,3 +86,15 @@ def test_exposed_namespace_returns_to_top(adapter):
     recv_n(early, 4)
     _, snapshot = join(adapter)
     assert [entry["skill_id"] for entry in snapshot["stack"]] == ["skill.low"]
+
+
+def test_snapshot_carries_last_ambient_payload_per_topic(adapter):
+    early, _ = join(adapter, "kitchen")
+    adapter.on_status_event("gui.ambient.weather", {"temp": 20}, "default")
+    adapter.on_status_event("gui.ambient.weather", {"temp": 21}, "default")
+    adapter.on_status_event("gui.ambient.notifications", {"count": 3}, "kitchen")
+    adapter.on_status_event("ovos.utterance.speak", {"utterance": "hi"}, "default")
+    recv_n(early, 4)
+    _, snapshot = join(adapter, "hall")
+    assert snapshot["ambient"] == {"gui.ambient.weather": {"temp": 21},
+                                   "gui.ambient.notifications": {"count": 3}}

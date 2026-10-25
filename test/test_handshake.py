@@ -24,7 +24,8 @@ def test_good_hello_gets_welcome_then_snapshot(adapter):
         assert recv(conn) == {"type": "welcome", "protocol": "ovos-gui-1",
                               "version": 1, "session_id": "kitchen",
                               "server": f"ovos-gui-plugin-visage/{__version__}"}
-        assert recv(conn) == {"type": "snapshot", "session_id": "kitchen", "stack": []}
+        assert recv(conn) == {"type": "snapshot", "session_id": "kitchen", "stack": [],
+                              "ambient": {}}
         assert adapter.any_client_connected()
 
 

@@ -27,13 +27,14 @@ def load_frames(path: Path):
     return [frame for frame in frames if "_note" not in frame]
 
 
-def load_stack(path):
+def load_snapshot(path):
+    """The first snapshot frame in `path`; an empty one when `path` is None."""
     if path is None:
-        return []
+        return {"stack": [], "ambient": {}}
     snapshots = [f for f in load_frames(Path(path)) if f.get("type") == "snapshot"]
     if not snapshots:
         raise SystemExit(f"{path} holds no snapshot frame")
-    return snapshots[0]["stack"]
+    return snapshots[0]
 
 
 def parse_args(argv=None):
@@ -70,7 +71,9 @@ def main(argv=None) -> int:
         logging.basicConfig(level=logging.INFO)
     frames = load_frames(args.fixture)
     config = {"host": args.host, "port": args.port, "path": args.path}
-    server = GUI1Server(config, state=StaticSnapshot(load_stack(args.snapshot))).start()
+    snapshot = load_snapshot(args.snapshot)
+    state = StaticSnapshot(snapshot["stack"], snapshot.get("ambient"))
+    server = GUI1Server(config, state=state).start()
     if not server.ready.wait(5) or server.port is None:
         LOG.error(f"replay server could not listen with {config}")
         return 1
