@@ -59,7 +59,7 @@ stripped by ovos-gui and `null` values already removed.
 
 | `type` | Fields | Source | Sent to |
 |---|---|---|---|
-| `template` | `skill_id`, `template`, `data`, `session_id` | `dispatch_template` (a `SYSTEM_*` name) or `on_legacy_page` (a skill page name) | clients of `session_id` |
+| `template` | `skill_id`, `template`, `data`, `session_id`, optional `index` and `page_count` | `dispatch_template` (a `SYSTEM_*` name) or `on_legacy_page` (a skill page name) | clients of `session_id` |
 | `session_update` | `skill_id`, `data`, `session_id` | `on_session_update` | clients of `session_id` |
 | `activated` | `skill_id`, `session_id` | `on_namespace_activated` | clients of `session_id` |
 | `deactivated` | `skill_id`, `session_id` | `on_namespace_deactivated` | clients of `session_id` |
@@ -71,12 +71,22 @@ stripped by ovos-gui and `null` values already removed.
   from the legacy hook, a skill's own page name. It is never a handler method name and never a
   QML file. Unknown `SYSTEM_*` names pass through unchanged; the client degrades them
   ([gui-1.md 6.5](https://github.com/OpenVoiceOS/architecture/blob/b6c1583/gui-1.md#65-capability-and-graceful-degradation)).
+- `index` and `page_count` (proposed amendment B,
+  [gui-1.md 6.3](https://github.com/OpenVoiceOS/architecture/blob/b6c1583/gui-1.md#63-events-received)): `index` is the active
+  entry's zero-based position in the namespace's `page_names`, and `page_count` is the length
+  of `page_names`. The server sends both or neither, with `0 <= index < page_count`. They are
+  optional on the wire; absent means unknown, and a client then never sends `focus` for that
+  namespace. The adapter sends them when ovos-gui passes them to `dispatch_template` or
+  `on_legacy_page`, which it does on every show and on the dispatch after a valid `focus`.
+  That dispatch, with the new `index`, is how a client learns that its `focus` took effect.
+  A legacy page carries them the same way.
 - **Legacy pages (prototype only).** A skill that shows its own page name (`time`,
   `CurrentWeather`, `Timer`) is never dispatched as a template; ovos-gui hands it to the
   adapter's `on_legacy_page(skill_id, page, data, session_id)` instead. This is the
   deployment-specific legacy path that
   [gui-1.md 4.2](https://github.com/OpenVoiceOS/architecture/blob/b6c1583/gui-1.md#42-messages)
-  allows (proposed amendment E names it). ovos-gui takes this path when the **first**
+  allows (proposed amendment E names it); the hook also gets `index` and `page_count`.
+  ovos-gui takes this path when the **first**
   `page_names` entry is not a `SYSTEM_*` name, and sends the **active** entry. The adapter sends
   it as an ordinary `template` frame whose `template` is the page name exactly as the skill sent
   it, with the same `data` and `session_id` rules, and the snapshot mirror records it as that
@@ -96,16 +106,17 @@ stripped by ovos-gui and `null` values already removed.
   `gui.ambient.*` per [6.9.1](https://github.com/OpenVoiceOS/architecture/blob/b6c1583/gui-1.md#691-ambient-data),
   or whatever legacy topic ovos-gui forwards); `status.data` is the message payload unchanged.
 - `snapshot.stack` is an array, **index 0 = active/top**, each entry
-  `{"skill_id": "...", "template": "<spec name or legacy page name>" | null, "data": {...}}`.
-  `template` is `null` when the namespace has data but no template yet. An empty array means
-  idle.
+  `{"skill_id": "...", "template": "<spec name or legacy page name>" | null, "data": {...}}`,
+  plus `"index"` and `"page_count"` as the last `template` frame for that namespace carried
+  them (both or neither, same meaning). `template` is `null` when the namespace has data but
+  no template yet, and such an entry has neither field. An empty array means idle.
 - `snapshot.ambient` is an object `{"<topic>": {...}}`: the last payload the adapter saw for each
   `gui.ambient.*` status event, unchanged, device-wide. `{}` when none was seen.
 - **PROTOTYPE SHORTCUT:** ovos-gui has a state query surface
   ([gui-1.md 6.7](https://github.com/OpenVoiceOS/architecture/blob/b6c1583/gui-1.md#67-state-query-recovery)),
   but it gives an adapter no handle to it. The adapter builds `snapshot` from a per-session
-  mirror of the adapter calls it saw: activation order, last template and last data per
-  `skill_id`, plus the ambient map. `deactivated` removes the entry. `idle` does not change the
+  mirror of the adapter calls it saw: activation order, last template with its `index` and
+  `page_count`, and last data per `skill_id`, plus the ambient map. `deactivated` removes the entry. `idle` does not change the
   mirror, because ovos-gui sends it after the deactivations that empty its session. The plan
   wants a stateless adapter that reads the stack from ovos-gui instead.
 
@@ -113,7 +124,7 @@ Example sequence after a skill shows text (the order ovos-gui calls the hooks):
 
 ```json
 {"type": "session_update", "skill_id": "ovos-skill-hello.openvoiceos", "data": {"title": "Hi", "text": "Hello"}, "session_id": "default"}
-{"type": "template", "skill_id": "ovos-skill-hello.openvoiceos", "template": "SYSTEM_text", "data": {"title": "Hi", "text": "Hello"}, "session_id": "default"}
+{"type": "template", "skill_id": "ovos-skill-hello.openvoiceos", "template": "SYSTEM_text", "data": {"title": "Hi", "text": "Hello"}, "session_id": "default", "index": 0, "page_count": 1}
 {"type": "activated", "skill_id": "ovos-skill-hello.openvoiceos", "session_id": "default"}
 ```
 
@@ -147,7 +158,9 @@ Both Messages have the context
 - `focus` asks ovos-gui to make another held entry of the namespace's `page_names` active
   (proposed amendment B: `gui.page.focus`). ovos-gui acts only when the namespace is on top of
   that session's stack and `page_number` is in range; it then dispatches the newly active entry,
-  so the client gets a new `template` frame. Every valid `focus` restarts the namespace's
+  so the client gets a new `template` frame with `index` equal to `page_number`. A client sends
+  `focus` for a namespace only after a `template` frame or snapshot entry for it carried both
+  `index` and `page_count`. Every valid `focus` restarts the namespace's
   removal timer, as a touch. A `focus` that names the current entry does only that: it
   dispatches nothing. A `focus` for a namespace that is not on top, or with `page_number` out
   of range, is ignored, and ovos-gui logs one diagnostic for it.
