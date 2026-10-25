@@ -4,16 +4,21 @@ from typing import Any, Callable, Dict, Optional
 from ovos_plugin_manager.templates.gui import AbstractGUIPlugin
 
 from ovos_gui_plugin_visage import protocol
+from ovos_gui_plugin_visage.bus_relay import BusRelay
 from ovos_gui_plugin_visage.log import LOG
 from ovos_gui_plugin_visage.server import GUI1Server
 
 
 class VisageGUIPlugin(AbstractGUIPlugin):
-    """Every handler builds one frame and hands it to the server thread."""
+    """Every handler builds one frame and hands it to the server thread.
+
+    Client `interaction` and `focus` frames go back out on the bus (BusRelay).
+    """
 
     def __init__(self, config: Optional[Dict[str, Any]] = None, bus=None):
         super().__init__(config or {}, bus=bus)
-        self.server = GUI1Server(self.config).start()
+        self.relay = BusRelay(bus)
+        self.server = GUI1Server(self.config, on_client_frame=self.relay.relay).start()
 
     def _publish(self, build: Callable[..., protocol.Frame], *args) -> None:
         try:
@@ -52,3 +57,4 @@ class VisageGUIPlugin(AbstractGUIPlugin):
 
     def shutdown(self) -> None:
         self.server.stop()
+        self.relay.shutdown()

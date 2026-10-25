@@ -3,7 +3,7 @@ import asyncio
 import json
 import threading
 from http import HTTPStatus
-from typing import Dict, Optional, Set
+from typing import Callable, Dict, Optional, Set
 
 from websockets.asyncio.server import serve
 from websockets.exceptions import ConnectionClosed
@@ -16,21 +16,31 @@ from ovos_gui_plugin_visage.mirror import StackMirror
 DEFAULTS = {"host": "127.0.0.1", "port": 18182, "path": "/gui1",
             "hello_timeout": 5.0, "max_backlog": 256}
 
+ClientFrameHandler = Callable[[protocol.Frame, str], None]
+
+
+def _ignore_client_frame(frame: protocol.Frame, session_id: str) -> None:
+    LOG.info(f"GUI-1 client frame not forwarded (no handler): {frame}")
+
 
 class GUI1Server:
     """Accepts GUI-1 clients and fans published frames out by session.
 
     `publish` is safe to call from any thread and never blocks on a client.
     `state` serves snapshots and sees every frame (StackMirror by default).
+    `on_client_frame(frame, session_id)` gets each valid `interaction` or
+    `focus` frame on the loop thread; it must return at once.
 
     Threading invariant: `state` and the session map are touched only on the
     server loop thread, so they need no lock. Hook threads (bus executor
     workers, ovos-gui's idle Timer) cross over only via `call_soon_threadsafe`.
     """
 
-    def __init__(self, config: Optional[dict] = None, state=None):
+    def __init__(self, config: Optional[dict] = None, state=None,
+                 on_client_frame: Optional[ClientFrameHandler] = None):
         self.config = {**DEFAULTS, **(config or {})}
         self.state = state or StackMirror()
+        self.on_client_frame = on_client_frame or _ignore_client_frame
         self.port: Optional[int] = None
         self.ready = threading.Event()
         self._sessions: Dict[str, Set[ClientLink]] = {}
@@ -114,13 +124,22 @@ class GUI1Server:
         link = self._register(websocket, session_id)
         try:
             async for message in websocket:
-                LOG.info(f"GUI-1 ignored client frame from {link.peer}: "
-                         f"{str(message)[:500]}")
+                self._receive(link, message)
         except ConnectionClosed:
             pass
         finally:
             link.forget()
             LOG.info(f"GUI-1 client {link.peer} left session '{session_id}'")
+
+    def _receive(self, link: ClientLink, message) -> None:
+        frame = protocol.parse_client_frame(message)
+        if frame is None:
+            LOG.info(f"GUI-1 ignored client frame from {link.peer}: {str(message)[:500]}")
+            return
+        try:
+            self.on_client_frame(frame, link.session_id)
+        except Exception:
+            LOG.exception(f"GUI-1 client frame handler failed for {frame}")
 
     async def _handshake(self, websocket) -> Optional[str]:
         timeout = float(self.config["hello_timeout"])

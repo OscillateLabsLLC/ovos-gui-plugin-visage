@@ -81,3 +81,37 @@ def status(event_name: str, data: Optional[Dict[str, Any]], session_id: str) -> 
 def is_broadcast(frame: Frame) -> bool:
     """Only status goes to every client regardless of session; idle is per session."""
     return frame.get("type") == "status"
+
+
+def parse_client_frame(raw: Any) -> Optional[Frame]:
+    """A valid interaction or focus frame after hello, normalised; None for anything else."""
+    try:
+        frame = json.loads(raw) if isinstance(raw, str) else None
+    except ValueError:
+        return None
+    if not isinstance(frame, dict) or not _is_name(frame.get("namespace")):
+        return None
+    if frame.get("type") == "interaction":
+        return _interaction(frame)
+    if frame.get("type") == "focus":
+        return _focus(frame)
+    return None
+
+
+def _is_name(value: Any) -> bool:
+    return isinstance(value, str) and bool(value)
+
+
+def _interaction(frame: Frame) -> Optional[Frame]:
+    data = frame.get("data", {})
+    if not _is_name(frame.get("event")) or not isinstance(data, dict):
+        return None
+    return {"type": "interaction", "namespace": frame["namespace"],
+            "event": frame["event"], "data": data}
+
+
+def _focus(frame: Frame) -> Optional[Frame]:
+    page_number = frame.get("page_number")
+    if not isinstance(page_number, int) or isinstance(page_number, bool) or page_number < 0:
+        return None
+    return {"type": "focus", "namespace": frame["namespace"], "page_number": page_number}

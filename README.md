@@ -55,6 +55,9 @@ Put this block in `mycroft.conf`. All keys are optional. The values below are th
 3. The server thread sends the frame to the clients of its `session_id`.
    It sends `status` frames to all clients. `idle` goes only to the clients of its session.
 4. A new client sends `hello`. The server replies with `welcome` and then one `snapshot`.
+5. A client can send `interaction` and `focus` frames. The adapter puts each one on the
+   message bus as `gui.interaction` or `gui.page.focus`, with the session of the connection.
+   One worker thread does the emits, so a slow bus does not stop the server.
 
 ## Replay server (no ovos-gui)
 
@@ -78,6 +81,14 @@ To see the frames from a live adapter or from the replay server, use the dump cl
 
 ```sh
 python tool/dump_client.py ws://127.0.0.1:28182/gui1 --session default
+```
+
+To send client frames, add `--send JSON` one or more times. The dump client sends them after
+the snapshot arrives:
+
+```sh
+python tool/dump_client.py ws://127.0.0.1:28182/gui1 \
+  --send '{"type": "focus", "namespace": "my.skill", "page_number": 1}'
 ```
 
 ## Fixtures
@@ -110,7 +121,9 @@ These items are temporary. They are not the final design.
   The plan wants a stateless adapter that reads the stack from `ovos-gui`.
 - **No authentication.** Any client that can reach the port can connect. The default host is
   `127.0.0.1` for this reason.
-- **No reply leg.** The server logs and ignores all client frames after `hello` (GUI-1 version 1).
+- **Client frames follow draft amendments.** `interaction` and `focus` map to the
+  `gui.interaction` and `gui.page.focus` Messages of the proposed GUI-1 amendments A and B.
+  The server logs and ignores any other client frame.
 
 ## License
 
