@@ -55,8 +55,20 @@ already stripped by ovos-gui and `null` values already removed.
 
 - `template` is the **spec name** (`SYSTEM_text`, `SYSTEM_weather`, `SYSTEM_media_player`, …),
   never a handler method name and never a QML file. Unknown `SYSTEM_*` names pass through
-  unchanged; the client degrades them (spec §6.5). A skill's own non-`SYSTEM_` template name also
-  passes through.
+  unchanged; the client degrades them (spec §6.5).
+- **Legacy pages (prototype only).** A skill that shows its own page name (`time`,
+  `CurrentWeather`, `Timer`) is never dispatched as a template; ovos-gui hands it to the
+  adapter's `on_legacy_page(skill_id, page, data, session_id)` instead. This is the
+  deployment-specific legacy path that
+  [gui-1.md 4.2](https://github.com/OpenVoiceOS/architecture/blob/b6c1583/gui-1.md#42-messages)
+  allows. The adapter sends it as an ordinary `template` frame whose `template` is the page
+  name exactly as the skill sent it, with the same `data` and `session_id` rules, and the
+  snapshot mirror records it as that namespace's template. A client routes a non-`SYSTEM_`
+  `template` to the skill's own page (Visage: `<skill_id>/<page>` in `router.dart` `routes`).
+  ovos-gui calls the hook only for the active `page_names` entry, after `on_session_update`
+  and before `on_namespace_activated`, as for a template. Legacy frame names with a spec alias
+  (`SYSTEM_TextFrame`) still arrive as spec templates. The spec has no such frame; it lasts
+  only until skills emit catalogue templates.
 - `activated` means the namespace is now the top of the stack for that session. `deactivated`
   means it left the stack; the client drops its state.
 - `idle` means some session's stack just emptied (ovos-gui calls `on_idle` device-wide, spec finding F3). A client whose own session stack is already empty shows its resting display; a client still holding a stack ignores the frame. The `deactivated` frames that emptied the session arrive before it.

@@ -25,6 +25,11 @@ class VisageGUIPlugin(AbstractGUIPlugin):
                           data: Dict[str, Any], session_id: str = "default") -> None:
         self._publish(protocol.template, skill_id, template, data, session_id)
 
+    def on_legacy_page(self, skill_id: str, page: str, data: Dict[str, Any],
+                       session_id: str = "default") -> None:
+        """GUI-1 4.2 legacy path (prototype only): the skill's own page goes out as a template frame."""
+        self._publish(protocol.template, skill_id, page, data, session_id)
+
     def on_session_update(self, skill_id: str, data: Dict[str, Any],
                           session_id: str = "default") -> None:
         self._publish(protocol.session_update, skill_id, data, session_id)
