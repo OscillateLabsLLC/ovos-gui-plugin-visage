@@ -67,9 +67,10 @@ def test_idle_from_one_session_keeps_other_sessions_snapshot(adapter):
     adapter.on_namespace_activated(HELLO_SKILL, "kitchen")
     adapter.on_namespace_activated(HELLO_SKILL, "hall")
     adapter.on_namespace_deactivated(HELLO_SKILL, "hall")
-    adapter.on_idle()
-    recv_n(kitchen, 2)
+    adapter.on_idle("hall")
+    recv(kitchen)
     recv_n(hall, 3)
+    assert_silent(kitchen)
     _, late_kitchen = join(adapter, "kitchen")
     assert [entry["skill_id"] for entry in late_kitchen["stack"]] == [HELLO_SKILL]
     _, late_hall = join(adapter, "hall")

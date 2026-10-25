@@ -53,7 +53,7 @@ Put this block in `mycroft.conf`. All keys are optional. The values below are th
 1. The adapter starts the websocket server on its own thread. `__init__` does not wait.
 2. Each adapter call makes one frame and puts it on a queue. The call does not wait for a client.
 3. The server thread sends the frame to the clients of its `session_id`.
-   It sends `idle` and `status` frames to all clients.
+   It sends `status` frames to all clients. `idle` goes only to the clients of its session.
 4. A new client sends `hello`. The server replies with `welcome` and then one `snapshot`.
 
 ## Replay server (no ovos-gui)
@@ -106,7 +106,7 @@ These items are temporary. They are not the final design.
 - **Snapshot from a local mirror.** `ovos-gui` has no query surface yet. The adapter keeps a copy
   of the stack for each session. It builds the copy from the calls it sees: activation order, last
   template, and last data for each `skill_id`. `deactivated` removes an entry. `idle` does not
-  change the copy, because `ovos-gui` sends it after the deactivations that empty one session.
+  change the copy, because `ovos-gui` sends it after the deactivations that empty its session.
   The plan wants a stateless adapter that reads the stack from `ovos-gui`.
 - **No authentication.** Any client that can reach the port can connect. The default host is
   `127.0.0.1` for this reason.

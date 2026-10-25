@@ -40,8 +40,8 @@ class VisageGUIPlugin(AbstractGUIPlugin):
     def on_namespace_deactivated(self, skill_id: str, session_id: str = "default") -> None:
         self._publish(protocol.deactivated, skill_id, session_id)
 
-    def on_idle(self) -> None:
-        self._publish(protocol.idle)
+    def on_idle(self, session_id: str = "default") -> None:
+        self._publish(protocol.idle, session_id)
 
     def on_status_event(self, event_name: str, data: Dict[str, Any],
                         session_id: str = "default") -> None:

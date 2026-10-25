@@ -2,8 +2,8 @@
 
 PROTOTYPE SHORTCUT: ovos-gui has no query surface yet, so the adapter rebuilds
 the stack from the adapter calls it sees instead of asking ovos-gui.
-`idle` changes nothing: ovos-gui fires the device-wide on_idle when any one
-session empties, always after the deactivations that emptied it.
+`idle` changes nothing: ovos-gui calls on_idle(session_id) only after the
+deactivations that emptied that session, so its mirror is already empty.
 Only touched from the server's event loop thread.
 """
 from typing import Any, Dict, List

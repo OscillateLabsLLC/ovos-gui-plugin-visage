@@ -69,8 +69,8 @@ def deactivated(skill_id: str, session_id: str) -> Frame:
     return {"type": "deactivated", "skill_id": skill_id, "session_id": session_id}
 
 
-def idle() -> Frame:
-    return {"type": "idle"}
+def idle(session_id: str) -> Frame:
+    return {"type": "idle", "session_id": session_id}
 
 
 def status(event_name: str, data: Optional[Dict[str, Any]], session_id: str) -> Frame:
@@ -79,5 +79,5 @@ def status(event_name: str, data: Optional[Dict[str, Any]], session_id: str) -> 
 
 
 def is_broadcast(frame: Frame) -> bool:
-    """idle and status go to every client regardless of session."""
-    return frame.get("type") in ("idle", "status")
+    """Only status goes to every client regardless of session; idle is per session."""
+    return frame.get("type") == "status"

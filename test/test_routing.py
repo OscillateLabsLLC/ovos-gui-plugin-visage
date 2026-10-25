@@ -21,14 +21,20 @@ def test_default_is_a_literal_session_not_a_wildcard(adapter):
     assert_silent(hall)
 
 
-def test_idle_and_status_reach_every_session(adapter):
+def test_idle_reaches_only_its_session(adapter):
     kitchen, _ = join(adapter, "kitchen")
     hall, _ = join(adapter, "hall")
-    adapter.on_idle()
-    adapter.on_status_event("recognizer_loop:wakeword", {"utterance": "hey"}, "kitchen")
+    adapter.on_idle("kitchen")
+    assert recv(kitchen) == {"type": "idle", "session_id": "kitchen"}
+    assert_silent(hall)
+
+
+def test_status_reaches_every_session(adapter):
+    kitchen, _ = join(adapter, "kitchen")
+    hall, _ = join(adapter, "hall")
+    adapter.on_status_event("ovos.listener.wakeword", {"utterance": "hey"}, "kitchen")
     for conn in (kitchen, hall):
-        assert recv(conn) == {"type": "idle"}
-        assert recv(conn) == {"type": "status", "event_name": "recognizer_loop:wakeword",
+        assert recv(conn) == {"type": "status", "event_name": "ovos.listener.wakeword",
                               "data": {"utterance": "hey"}, "session_id": "kitchen"}
 
 
@@ -51,5 +57,5 @@ def test_unknown_template_passes_through(adapter):
 def test_unserialisable_data_is_logged_and_later_frames_still_flow(adapter):
     conn, _ = join(adapter)
     adapter.on_session_update("skill.a", {"bad": object()}, "default")
-    adapter.on_idle()
-    assert recv(conn) == {"type": "idle"}
+    adapter.on_idle("default")
+    assert recv(conn) == {"type": "idle", "session_id": "default"}

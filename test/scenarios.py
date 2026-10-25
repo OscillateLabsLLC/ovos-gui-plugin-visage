@@ -2,8 +2,8 @@
 
 handle_show_page dispatches the template, then activates the namespace;
 handle_set_value calls on_session_update with the full merged data;
-removing the top namespace re-activates the one below it, and on_idle follows
-the deactivation that empties a session.
+removing the top namespace re-activates the one below it, and on_idle(session_id)
+follows the deactivation that empties that session.
 
 legacy_time_page replays recorded input: `<name>_calls.jsonl` holds the recorder adapter's rows from
 the live stack run (gui1-upstream/BRIDGE.md), and `<name>.jsonl` holds the frames a passive GUI-1 client
@@ -39,7 +39,7 @@ def weather_then_clear(adapter):
     adapter.on_namespace_deactivated(WEATHER_SKILL, "default")
     adapter.on_namespace_activated(HELLO_SKILL, "default")
     adapter.on_namespace_deactivated(HELLO_SKILL, "default")
-    adapter.on_idle()
+    adapter.on_idle("default")
 
 
 def replay_recorded_calls(adapter, name):

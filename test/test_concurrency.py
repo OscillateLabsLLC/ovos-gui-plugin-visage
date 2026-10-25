@@ -25,7 +25,7 @@ def random_call(adapter, rng):
         lambda: adapter.on_namespace_activated(skill, session),
         lambda: adapter.on_namespace_deactivated(skill, session),
         lambda: adapter.on_status_event("ovos.utterance.speak", data, session),
-        adapter.on_idle,
+        lambda: adapter.on_idle(session),
     ]
     return rng.choice(calls)
 

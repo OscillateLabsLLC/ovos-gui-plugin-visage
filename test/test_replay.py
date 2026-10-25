@@ -58,5 +58,5 @@ def test_replay_serves_snapshot_fixture(replay):
 
 def test_replay_skips_note_lines(replay, tmp_path):
     fixture = tmp_path / "hand.jsonl"
-    fixture.write_text('{"_note": "written from WIRE.md, not recorded"}\n{"type": "idle"}\n')
-    assert replay.load_frames(fixture) == [{"type": "idle"}]
+    fixture.write_text('{"_note": "written from WIRE.md, not recorded"}\n{"type": "idle", "session_id": "default"}\n')
+    assert replay.load_frames(fixture) == [{"type": "idle", "session_id": "default"}]

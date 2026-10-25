@@ -72,8 +72,8 @@ def test_later_client_frames_are_ignored(adapter):
         recv(conn)
         recv(conn)
         conn.send(json.dumps({"type": "anything"}))
-        adapter.on_idle()
-        assert recv(conn) == {"type": "idle"}
+        adapter.on_idle("default")
+        assert recv(conn) == {"type": "idle", "session_id": "default"}
 
 
 def test_disconnect_clears_any_client_connected(adapter):
