@@ -1,0 +1,11 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "packages": {
+    ".": {
+      "release-type": "python",
+      "package-name": "ovos-gui-plugin-visage",
+      "version-file": "ovos_gui_plugin_visage/version.py",
+      "changelog-path": "CHANGELOG.md"
+    }
+  }
+}
